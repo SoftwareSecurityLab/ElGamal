@@ -194,6 +194,4 @@ class ElGamal{
 }
 
 
-const instance = new ElGamal();
-
-module.exports = instance;
+module.exports = ElGamal;
