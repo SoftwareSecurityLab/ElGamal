@@ -1,0 +1,27 @@
+{
+  "name": "elgamal",
+  "version": "1.0.0",
+  "description": "This project is a part of IUT E-Voting. This is a cypher engine which uses ElGamal cryptosystem internally. besides cryptography, it provide some group functionality such as add 2 members or select a random group member and so on.",
+  "main": "elgamal.js",
+  "scripts": {
+    "test": "echo 'test'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/iut-e-voting/elgamal.git"
+  },
+  "keywords": [
+    "elgamal",
+    "cyclic",
+    "group",
+    "multiplicative",
+    "group",
+    "cryptography"
+  ],
+  "author": "Golgolnia Milad",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/iut-e-voting/elgamal/issues"
+  },
+  "homepage": "https://gitlab.com/iut-e-voting/elgamal#readme"
+}
