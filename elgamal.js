@@ -21,17 +21,19 @@ class ElGamal{
      * @param {number} lengthOfOrder indicate the length of Order Of Group in bit
      */
     async initialize(lengthOfOrder = 2048){
-        //BUG:we're ignoring q! so if there was any problem with cryptoSystem, 
-        //    we should come back here and fix it
+        let q = 0;
         do{
-            this.p = await bigIntManager.getPrime(lengthOfOrder);
+            q = await bigIntManager.getPrime(lengthOfOrder-1);
+            log(q, typeof q);
+            this.p = q.shiftLeft(1).add(1);
             log('one prime number produced:', this.p.bitLength());
-        }while(this.p.bitLength() != lengthOfOrder);
+        }while(!this.p.isPrime());
 
         //produce generator:
         do{
             this.g = await bigIntManager.getInRange(this.p,3);
         }while(
+            this.g.modPow(q,p).equals(1) ||
             this.g.modPow(2,this.p).equals(1) ||
             this.p.prev().remainder(this.g).equals(0) ||
             this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
@@ -47,6 +49,52 @@ class ElGamal{
         this.y = this.g.modPow(this.x, this.p);
     }
 
+    async initializeRemotely(lengthOfOrder = 2048){
+        return new Promise((resolve, reject)=>{
+
+        https.get(`https://2ton.com.au/getprimes/random/${lengthOfOrder}`, 
+                    (res)=>{
+                        res.on('data', async (data)=>{
+                            let readableData = data.toString('utf8');
+                            let primes = JSON.parse(readableData);
+                            this.p = bigInteger(primes.p.base10);
+                            let q = bigInteger(primes.q.base10);
+
+                            //check Validity of primes:
+                            if(q.multiply(2).add(1).compareTo(this.p))
+                                reject(`The received primes are not in Safe form:
+                                        p = ${primes.p.base10}, 
+                                        q = ${primes.q.base10}`);
+                            
+                            if(!this.p.isProbablePrime())
+                                reject('P is not prime: '+ primes.p.base10);
+                            if(!q.isProbablePrime())
+                                reject('q is not prime: ' + primes.q.base10);
+
+                            //produce generator:
+                            do{
+                                this.g = await bigIntManager.getInRange(this.p,3);
+                            }while(
+                                this.g.modPow(q,this.p).equals(1) ||
+                                this.g.modPow(2,this.p).equals(1) ||
+                                this.p.prev().remainder(this.g).equals(0) ||
+                                this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
+                            );
+
+                            //produce privateKey:
+                            this.x = await bigIntManager.getInRange(
+                                this.p.prev(),
+                                2
+                            );
+                    
+                            //calculate public key:
+                            this.y = this.g.modPow(this.x, this.p);
+                            resolve(true);
+                        })
+                    }
+        )
+        })
+    }
     async encrypt(message){
         const tempPrivateKey = await bigIntManager.getInRange(this.p.prev(), 1);
 
@@ -78,54 +126,6 @@ class ElGamal{
         return (await bigIntManager.getInRange(this.p, 3));
     }
 
-    async fillOut(){
-        if(!this.p)
-            //Not Implemented yet.
-            throw new Error('Service is not Implemented');
-        if(!this.g)
-            //Not Implemented yet.
-            throw new Error('Service is not Implemented');
-        if(!this.x)
-            this.x = await bigIntManager.getInRange(
-                this.p.prev(),
-                2
-            );
-        if(!this.y)
-            this.y = this.g.modPow(this.x, this.p);
-    }
-
-    async power(base, exponent){
-        if(typeof base === 'string')
-            base = bigInteger(base);
-        if(typeof exponent === 'string')
-            exponent = bigInteger(exponent);
-        return (await base.modPow(exponent, this.p));
-    }
-
-    async add(first, second){
-        if(typeof first === 'string')
-            first = bigInteger(first);
-        if(typeof second === 'string')
-            second = bigInteger(second);
-        return (await first.add(second).mod(this.p));
-    }
-
-    async simpleAdd(first, second){
-        if(typeof first === 'string')
-            first = bigInteger(first);
-        if(typeof second === 'string')
-            second = bigInteger(second);
-        return (await first.add(second));
-    }
-
-    async multiply(first, second){
-        if(typeof first === 'string')
-            first = bigInteger(first);
-        if(typeof second === 'string')
-            second = bigInteger(second);
-        return (await first.multiply(second).mod(this.p));
-    }
-
     /**
      * @param {BigInt} _g Generator
      */
@@ -136,7 +136,7 @@ class ElGamal{
     }
 
     get generator(){
-        return this.g;
+        return this.g.toString();
     }
 
     /**
@@ -149,7 +149,7 @@ class ElGamal{
     }
 
     get groupOrder(){
-        return this.p;
+        return this.p.toString();
     }
 
     /**
@@ -163,7 +163,7 @@ class ElGamal{
     }
 
     get publicKey(){
-        return this.y;
+        return this.y.toString();
     }
 
     /**
@@ -182,7 +182,7 @@ class ElGamal{
      *  ElGamal private key
      */
     get privateKey(){
-        return this.x;
+        return this.x.toString();
     }
 
     isReady(){
@@ -194,4 +194,6 @@ class ElGamal{
 }
 
 
-module.exports = ElGamal;
+const instance = new ElGamal();
+
+module.exports = instance;
