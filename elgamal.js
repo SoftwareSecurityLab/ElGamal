@@ -5,14 +5,23 @@ const https = require('https');
 
 
 const log = debug('app::elgamal');
+const securityLevels = ['HIGH', 'LOW', 'MEDIUM']
 
 
 /**
  * @typedef {'HIGH'|'LOW'|'MEDIUM'} securityLevel
  */
-const securityLevels = ['HIGH', 'LOW', 'MEDIUM']
+/**
+ * @typedef {Object} cipherText (refer to ElGamal Schema for more information).
+ * @property {bigInteger} c1 - This is half the shared secret: c1 = g^r 
+ * @property {bigInteger} c2 - This is encrypted message: c2 = y^r . m
+ */
+/**
+ * @typedef {8192|4096|3072|2048} allowedLengthes
+ */
 
 class ElGamal{
+
     /**
      * Initialize the ElGamal Engine by giving private key, public key, modulus, group order, group generator.
      * @param {string|bigInteger} [p] modulus of multiplicative group
@@ -133,10 +142,11 @@ class ElGamal{
             
             if(! this.p.isProbablePrime())
                 return false;
-        }else{
+        }else
             log('Warning: Low level security detected');
-            return true;
-        }
+        
+        this.isSecure = true;
+        return true;
     }
 
     /**
@@ -168,9 +178,10 @@ class ElGamal{
 
         //produce generator:
         do{
-            this.g = await bigIntManager.getInRange(this.p,3);
+            let exponent = await bigIntManager.getInRange(this.p,3);
+            this.g = bigInteger[2].modPow(exponent, this.p);
         }while(
-            this.g.modPow(q,p).equals(1) ||
+            this.g.modPow(q,p).notEquals(1) ||
             this.g.modPow(2,this.p).equals(1) ||
             this.p.prev().remainder(this.g).equals(0) ||
             this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
@@ -188,11 +199,13 @@ class ElGamal{
 
     /**
      * it's better to choose the lengthes which are divided evenly by 8.
-     * This method tries to connect to a remote DB and get the underlying group information and 
+     * This method tries to connect to a remote DB and get the underlying group information 
      * then initialize the engine.
      * Unlike initialize() method which creates a thread and has an enormous cpu usage, this method
      * don't have any cpu usage but it's need a network connection!
-     * @param {number} lengthOfOrder indicate the length of Modulus Of Group in bit
+     * @param {allowedLengthes} lengthOfOrder indicate the length of Modulus Of Group in bit
+     * @throws Will throw an error if there is no internet connection or received Information are
+     * inconsistent.
      */
     async initializeRemotely(lengthOfOrder = 4096){
         return new Promise((resolve, reject)=>{
@@ -226,7 +239,6 @@ class ElGamal{
                                 this.p.prev().remainder(this.g).equals(0) ||
                                 this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
                             );
-                            log('g^q = ', this.g.modPow(this.q, this.p))
 
                             //produce privateKey:
                             this.x = await bigIntManager.getInRange(
@@ -242,16 +254,36 @@ class ElGamal{
         )
         })
     }
+
+
+    /**
+     * Encrypt the given message under ElGamal cryptosystem schema. By default this use your own 
+     * public key unless you change it by setting publicKey.
+     * @param {number|bigInteger} message - The message which you want to encrypt it. please note due to the ElGamal schema
+     * it's must be a member of underlying group.
+     * @returns {cipherText} - The resulted cipher text which you can decrypt it by using decrypt() method. 
+     * @throws Will throw an Error if the message is not a number
+     */
     async encrypt(message){
+
+        if(! this.isSecure){
+            throw new Error(`Engine is not secure to use, 
+                please make sure you call checkSecurity() method before using engine.`);
+        }
+
+        if(! this.isReady()){
+            throw new Error(`Engine is not initialized correctly!`);
+        }
+
         const tempPrivateKey = await bigIntManager.getInRange(this.p.prev(), 1);
 
         let msgBI;
         if(typeof message === 'string'){
-            log(`This module is not intended to support string encryption types 
-                    but we try our best to do it.`);
-            msgBI = bigInteger(Buffer(message).toString('hex'), 16);
+            throw new Error('Not implemented yet! the message should of type number');
         }else if(typeof message === 'number')
             msgBI = bigInteger(message);
+        else if(message instanceof bigInteger)
+            msgBI = message;
         else
             throw new Error('Not supported message type');
         
@@ -262,15 +294,36 @@ class ElGamal{
         };
     }
 
-    async decrypt(cypherPair){
-        const sharedSecret = cypherPair.c1.modPow(this.x, this.p);
+    /**
+     * 
+     * @param {cipherText} cipherPair - The result of encrypt() method. 
+     * @returns {bigInteger} - The decrypted message which is a big Integer. The message is a member of 
+     * underlying Cyclic Group.
+     */
+    async decrypt(cipherPair){
+
+        if(! this.isSecure){
+            throw new Error(`Engine is not secure to use, 
+                please make sure you call checkSecurity() method before using engine.`);
+        }
+
+        if(! this.isReady()){
+            throw new Error(`Engine is not initialized correctly!`);
+        }
+
+        const sharedSecret = cipherPair.c1.modPow(this.x, this.p);
         const reverseSecret = sharedSecret.modInv(this.p);
-        const plainText = reverseSecret.multiply(cypherPair.c2).mod(this.p);
-        return plainText.toString();
+        const plainText = reverseSecret.multiply(cipherPair.c2).mod(this.p);
+        return plainText;
     }
 
+    /**
+     * Choose one of the underlying group members randomly!
+     * @returns {bigInteger} One of group members which is selected randomly.
+     */
     async randomGropuMember(){
-        return (await bigIntManager.getInRange(this.p, 3));
+        let exponenet = await bigIntManager.getInRange(this.p, 3);
+        return this.g.modPow(exponenet, this.p);
     }
 
     /**
