@@ -165,6 +165,7 @@ class ElGamal{
      * it's better to choose the lengthes which are divided evenly by 8.
      * By calling this method, the engine will create a thread to find a safe prime number and
      * then initialize engine using it.
+     * @async
      * @param {number} lengthOfOrder indicate the length of Modulus of Group in bit
      */
     async initialize(lengthOfOrder = 4096){
@@ -203,6 +204,7 @@ class ElGamal{
      * then initialize the engine.
      * Unlike initialize() method which creates a thread and has an enormous cpu usage, this method
      * don't have any cpu usage but it's need a network connection!
+     * @async
      * @param {allowedLengthes} lengthOfOrder indicate the length of Modulus Of Group in bit
      * @throws Will throw an error if there is no internet connection or received Information are
      * inconsistent.
@@ -261,7 +263,7 @@ class ElGamal{
      * public key unless you change it by setting publicKey.
      * @param {number|bigInteger} message - The message which you want to encrypt it. please note due to the ElGamal schema
      * it's must be a member of underlying group.
-     * @returns {cipherText} - The resulted cipher text which you can decrypt it by using decrypt() method. 
+     * @returns {Promise<cipherText>} - The resulted cipher text which you can decrypt it by using decrypt() method. 
      * @throws Will throw an Error if the message is not a number
      */
     async encrypt(message){
@@ -297,7 +299,7 @@ class ElGamal{
     /**
      * 
      * @param {cipherText} cipherPair - The result of encrypt() method. 
-     * @returns {bigInteger} - The decrypted message which is a big Integer. The message is a member of 
+     * @returns {Promise<bigInteger>} - The decrypted message which is a big Integer. The message is a member of 
      * underlying Cyclic Group.
      */
     async decrypt(cipherPair){
@@ -319,7 +321,7 @@ class ElGamal{
 
     /**
      * Choose one of the underlying group members randomly!
-     * @returns {bigInteger} One of group members which is selected randomly.
+     * @returns {Promise<bigInteger>} One of group members which is selected randomly.
      */
     async randomGropuMember(){
         let exponenet = await bigIntManager.getInRange(this.p, 3);
