@@ -19,6 +19,19 @@ const securityLevels = ['HIGH', 'LOW', 'MEDIUM']
 /**
  * @typedef {8192|4096|3072|2048} allowedLengthes
  */
+/**
+ * @typedef {Object} Engine the object containing essential information to build the ElGamal
+ *  cryptoengine again
+ * @property {bigInteger} p - The modulus of underlying group and determine the whole Cyclic group
+ * @property {bigInteger} g - The generator of underlying group.
+ * @property {bigInteger} y - The public key which is your public key and others can use it to 
+ * encrypt messages for you.
+ * @property {bigInteger} [x] - The private key(decryption key) which is strongly recommended to don't export it
+ * @property {bigInteger} [r] - The secret key which is used in last encryption to build 
+ * the cipherText.c1
+ * @property {securityLevel} [security] - The engine security level.
+ */
+
 
 class ElGamal{
 
@@ -279,6 +292,11 @@ class ElGamal{
 
         const tempPrivateKey = await bigIntManager.getInRange(this.p.prev(), 1);
 
+        /**
+         * @property {bigInteger} lastEncryptionKey keeps the last used encryption key.
+         */
+        this.lastEncryptionKey = tempPrivateKey;
+
         let msgBI;
         if(typeof message === 'string'){
             throw new Error('Not implemented yet! the message should of type number');
@@ -342,7 +360,20 @@ class ElGamal{
     }
 
     /**
-     * @param {BigInt} _p Order of inner cyclic group
+     * @param {BigInt} _q Order of inner cyclic group
+     */
+    set groupOrder(_q){
+        if(typeof _q === 'string')
+            _q = bigInteger(_q);
+        this.q = _q;
+    }
+
+    get groupOrder(){
+        return this.q.toString();
+    }
+
+    /**
+     * @param {BigInt} _p Modulus of Multiplicative group
      */
     set groupOrder(_p){
         if(typeof _p === 'string')
@@ -353,6 +384,7 @@ class ElGamal{
     get groupOrder(){
         return this.p.toString();
     }
+    
 
     /**
      * This is not ElGamal public key but the public secret.
@@ -365,7 +397,9 @@ class ElGamal{
     }
 
     get publicKey(){
-        return this.y.toString();
+        if(this.securityLevel === 'LOW')
+            return this.y.toString();
+        return null;
     }
 
     /**
@@ -392,6 +426,41 @@ class ElGamal{
             return true;
         }
         return false;
+    }
+
+    /**
+     * This method will export the ElGamal engine so that you can build it again completely.
+     * @param {boolean} deep if true then some last secret key will be revealed and removed from
+     * ElGamal for security sake.
+     * @returns {Engine} The exported ElGamal engine, you can import it easily by calling import() method
+     */
+    export(deep){
+        let r = undefined;
+        if(deep){
+            r = this.lastEncryptionKey;
+            this.lastEncryptionKey = undefined;
+        }
+        return {
+            r,
+            security: this.securityLevel,
+            ...(this.securityLevel === 'LOW'? {x: this.x} : undefined),
+            g: this.g,
+            p: this.p,
+            y: this.g.modPow(this.x, this.p)
+        };
+    }
+
+    /**
+     * This method will import ElGamal engine based on passed info.
+     * @param {Engine} engine - The ElGamal info which is exported using export() method.
+     */
+    import(engine){
+        this.isSecure = false;
+        this.g = engine.g;
+        this.p = engine.p;
+        this.y = engine.p;
+        this.securityLevel = engine.security;
+        this.x = engine.x;
     }
 }
 
