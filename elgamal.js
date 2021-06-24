@@ -347,6 +347,19 @@ class ElGamal{
     }
 
     /**
+     * calculate: generator^exponent mod modulus. It  works independent of ElGamal, it means you
+     * can use it even if ElGamal fails security conditions.
+     * This method is not part of elgamal but part of basic group functionality! it's provided
+     * here to reduce the complexity of dependencies.
+     * @param {bigInteger} exponent - The exponent to calculate its modular exponentiation 
+     * regarding generator
+     * @returns {bigInteger} The resulted modular exponentiation
+     */
+    power(exponent){
+        return this.g.modPow(exponent, this.p);
+    }
+
+    /**
      * @param {BigInt} _g Generator
      */
     set generator(_g){
