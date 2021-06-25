@@ -13,8 +13,8 @@ const securityLevels = ['HIGH', 'LOW', 'MEDIUM']
  */
 /**
  * @typedef {Object} cipherText (refer to ElGamal Schema for more information).
- * @property {bigInteger} c1 - This is half the shared secret: c1 = g^r 
- * @property {bigInteger} c2 - This is encrypted message: c2 = y^r . m
+ * @property {bigInteger.BigInteger} c1 - This is half the shared secret: c1 = g^r 
+ * @property {bigInteger.BigInteger} c2 - This is encrypted message: c2 = y^r . m
  */
 /**
  * @typedef {8192|4096|3072|2048} allowedLengthes
@@ -22,12 +22,12 @@ const securityLevels = ['HIGH', 'LOW', 'MEDIUM']
 /**
  * @typedef {Object} Engine the object containing essential information to build the ElGamal
  *  cryptoengine again
- * @property {bigInteger} p - The modulus of underlying group and determine the whole Cyclic group
- * @property {bigInteger} g - The generator of underlying group.
- * @property {bigInteger} y - The public key which is your public key and others can use it to 
+ * @property {bigInteger.BigInteger} p - The modulus of underlying group and determine the whole Cyclic group
+ * @property {bigInteger.BigInteger} g - The generator of underlying group.
+ * @property {bigInteger.BigInteger} y - The public key which is your public key and others can use it to 
  * encrypt messages for you.
- * @property {bigInteger} [x] - The private key(decryption key) which is strongly recommended to don't export it
- * @property {bigInteger} [r] - The secret key which is used in last encryption to build 
+ * @property {bigInteger.BigInteger} [x] - The private key(decryption key) which is strongly recommended to don't export it
+ * @property {bigInteger.BigInteger} [r] - The secret key which is used in last encryption to build 
  * the cipherText.c1
  * @property {securityLevel} [security] - The engine security level.
  */
@@ -37,11 +37,11 @@ class ElGamal{
 
     /**
      * Initialize the ElGamal Engine by giving private key, public key, modulus, group order, group generator.
-     * @param {string|bigInteger} [p] modulus of multiplicative group
-     * @param {string|bigInteger} [g] generator of the group
-     * @param {string|bigInteger} [y] public key(encryption key), 
+     * @param {string|bigInteger.BigInteger} [p] modulus of multiplicative group
+     * @param {string|bigInteger.BigInteger} [g] generator of the group
+     * @param {string|bigInteger.BigInteger} [y] public key(encryption key), 
      * NOTE: this is not your public key but public key of receiver.
-     * @param {string|bigInteger} [x] private key(decryption key)
+     * @param {string|bigInteger.BigInteger} [x] private key(decryption key)
      * @throws Will throw an error if any of passed parameters is an invalid big integer!
      */
     constructor(p, g, y, x){
@@ -63,7 +63,7 @@ class ElGamal{
         this.isSecure = false;
 
          /**
-         * @property {bigInteger} g - The generator of underlying multiplicative group.
+         * @property {bigInteger.BigInteger} g - The generator of underlying multiplicative group.
          */
         try{
             if(typeof g === 'string')
@@ -78,7 +78,7 @@ class ElGamal{
         }
         
         /**
-         * @property {bigInteger} p - The modulus of underlying multiplicative group.
+         * @property {bigInteger.BigInteger} p - The modulus of underlying multiplicative group.
          */
         try{
             if(typeof p === 'string'){
@@ -93,7 +93,7 @@ class ElGamal{
         }
 
         /**
-         * @property {bigInteger} x - The private key of the ElGamal cryptosystem.
+         * @property {bigInteger.BigInteger} x - The private key of the ElGamal cryptosystem.
          */
         try{
             if(typeof x === 'string'){
@@ -108,7 +108,8 @@ class ElGamal{
         }
 
         /**
-         * @property {bigInteger} y - The public key of ElGamal encryption
+         * @property {bigInteger.BigInteger} y - The public key of ElGamal encryption
+         * @private
          */
         try{
             if(typeof y === 'string')
@@ -123,10 +124,10 @@ class ElGamal{
         }
 
         /**
-         * @property {bigInteger} q - The group order
+         * @property {bigInteger.BigInteger} q - The group order
          */
         if(this.p)
-            this.q = this.p.minus(1).devide(2);
+            this.q = this.p.minus(1).divide(2);
         
     }
 
@@ -182,7 +183,7 @@ class ElGamal{
      * @param {number} lengthOfOrder indicate the length of Modulus of Group in bit
      */
     async initialize(lengthOfOrder = 4096){
-        let q = 0;
+        let q = undefined;
         do{
             q = await bigIntManager.getPrime(lengthOfOrder-1);
             log(q, typeof q);
@@ -195,7 +196,7 @@ class ElGamal{
             let exponent = await bigIntManager.getInRange(this.p,3);
             this.g = bigInteger[2].modPow(exponent, this.p);
         }while(
-            this.g.modPow(q,p).notEquals(1) ||
+            this.g.modPow(q,this.p).notEquals(1) ||
             this.g.modPow(2,this.p).equals(1) ||
             this.p.prev().remainder(this.g).equals(0) ||
             this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
@@ -274,7 +275,7 @@ class ElGamal{
     /**
      * Encrypt the given message under ElGamal cryptosystem schema. By default this use your own 
      * public key unless you change it by setting publicKey.
-     * @param {number|bigInteger} message - The message which you want to encrypt it. please note due to the ElGamal schema
+     * @param {number|bigInteger.BigInteger} message - The message which you want to encrypt it. please note due to the ElGamal schema
      * it's must be a member of underlying group.
      * @returns {Promise<cipherText>} - The resulted cipher text which you can decrypt it by using decrypt() method. 
      * @throws Will throw an Error if the message is not a number
@@ -293,7 +294,7 @@ class ElGamal{
         const tempPrivateKey = await bigIntManager.getInRange(this.p.prev(), 1);
 
         /**
-         * @property {bigInteger} lastEncryptionKey keeps the last used encryption key.
+         * @property {bigInteger.BigInteger} lastEncryptionKey keeps the last used encryption key.
          */
         this.lastEncryptionKey = tempPrivateKey;
 
@@ -317,7 +318,7 @@ class ElGamal{
     /**
      * 
      * @param {cipherText} cipherPair - The result of encrypt() method. 
-     * @returns {Promise<bigInteger>} - The decrypted message which is a big Integer. The message is a member of 
+     * @returns {Promise<bigInteger.BigInteger>} - The decrypted message which is a big Integer. The message is a member of 
      * underlying Cyclic Group.
      */
     async decrypt(cipherPair){
@@ -339,7 +340,7 @@ class ElGamal{
 
     /**
      * Choose one of the underlying group members randomly!
-     * @returns {Promise<bigInteger>} One of group members which is selected randomly.
+     * @returns {Promise<bigInteger.BigInteger>} One of group members which is selected randomly.
      */
     async randomGropuMember(){
         let exponenet = await bigIntManager.getInRange(this.p, 3);
@@ -351,16 +352,16 @@ class ElGamal{
      * can use it even if ElGamal fails security conditions.
      * This method is not part of elgamal but part of basic group functionality! it's provided
      * here to reduce the complexity of dependencies.
-     * @param {bigInteger} exponent - The exponent to calculate its modular exponentiation 
+     * @param {bigInteger.BigInteger} exponent - The exponent to calculate its modular exponentiation 
      * regarding generator
-     * @returns {bigInteger} The resulted modular exponentiation
+     * @returns {bigInteger.BigInteger} The resulted modular exponentiation
      */
     power(exponent){
         return this.g.modPow(exponent, this.p);
     }
 
     /**
-     * @param {BigInt} _g Generator
+     * @param {bigInteger.BigInteger|string} _g Generator
      */
     set generator(_g){
         if(typeof _g === 'string')
@@ -373,7 +374,7 @@ class ElGamal{
     }
 
     /**
-     * @param {BigInt} _q Order of inner cyclic group
+     * @param {bigInteger.BigInteger|string} _q Order of inner cyclic group
      */
     set groupOrder(_q){
         if(typeof _q === 'string')
@@ -386,22 +387,22 @@ class ElGamal{
     }
 
     /**
-     * @param {BigInt} _p Modulus of Multiplicative group
+     * @param {bigInteger.BigInteger|string} _p Modulus of Multiplicative group
      */
-    set groupOrder(_p){
+    set modulus(_p){
         if(typeof _p === 'string')
             _p = bigInteger(_p);
         this.p = _p;
     }
 
-    get groupOrder(){
+    get modulus(){
         return this.p.toString();
     }
     
 
     /**
      * This is not ElGamal public key but the public secret.
-     * @param {BigInt} _y public key
+     * @param {bigInteger.BigInteger|string} _y public key
      */
     set publicKey(_y){
         if(typeof _y === 'string')
@@ -417,7 +418,8 @@ class ElGamal{
 
     /**
      * We strongly advise to avoid calling this method!
-     * @param {BigInt} _x private key
+     * @param {bigInteger.BigInteger|string} _x private key
+     *
      */
     set privateKey(_x){
         if(typeof _x === 'string')
@@ -434,6 +436,10 @@ class ElGamal{
         return this.x.toString();
     }
 
+    /**
+     * This method checks if engine is initialized or not. It doesn't check engine security.
+     * @returns {boolean} - True if all parameters of engine are available and false otherwise.
+     */
     isReady(){
         if(this.p && this.g && this.y && this.x){
             return true;

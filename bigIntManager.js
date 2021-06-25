@@ -40,12 +40,13 @@ async function getPrime(bitLength){
 
 /**
  * 
- * @param {bigInt} max excluded
- * @param {number or bigInt} min included
+ * @param {bigInteger.BigInteger} max excluded
+ * @param {number|bigInteger.BigInteger} min included
+ * @returns {Promise<bigInteger.BigInteger>}
  */
 async function randomGeneratorInRange(max, min){
     const range = max.subtract(min).subtract(1);
-    let bi = 0;
+    let bi = undefined;
     do {
         const buffer = await asyncCryptoRandomGenerator(Math.ceil(range.bitLength()/8));
         bi = bigInteger(buffer.toString('hex'), 16).add(min);
