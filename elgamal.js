@@ -1,6 +1,6 @@
 /**
  * ElGamal Module
- * @module
+ * @module basic_simple_elgamal
  */
 
 
@@ -376,6 +376,9 @@ class ElGamal{
         this.g = _g;
     }
 
+    /**
+     * @type {string}
+     */
     get generator(){
         return this.g.toString();
     }
@@ -389,6 +392,9 @@ class ElGamal{
         this.q = _q;
     }
 
+    /**
+     * @type {string}
+     */
     get groupOrder(){
         return this.q.toString();
     }
@@ -402,6 +408,9 @@ class ElGamal{
         this.p = _p;
     }
 
+    /**
+     * @type {string}
+     */
     get modulus(){
         return this.p.toString();
     }
@@ -417,6 +426,9 @@ class ElGamal{
         this.y = _y;
     }
 
+    /**
+     * @type {string}
+     */
     get publicKey(){
         if(this.securityLevel === 'LOW')
             return this.y.toString();
@@ -435,12 +447,18 @@ class ElGamal{
     }
 
     /**
+     * Will return the private key if and only if the securityLevel is 'LOW'.
      * We strongly advise to avoid calling this method, 
      *  because this method return the flat private key and not 
      *  ElGamal private key
+     * @type {string?}
+     * @throws Will throw an Error if securityLevel is not 'LOW'
      */
     get privateKey(){
-        return this.x.toString();
+        if(this.securityLevel === 'LOW')
+            return this.x.toString();
+        else
+            throw new Error('Violating security policies. First set the security level to \'LOW\'');
     }
 
     /**
@@ -490,4 +508,9 @@ class ElGamal{
     }
 }
 
+
+
+/**
+ * ElGamal Engine
+ */
 module.exports = ElGamal;
