@@ -47,11 +47,12 @@ class ElGamal{
     constructor(p, g, y, x){
         
         /**
-         * @property {number} [securityLevel='HIGH']  - determines the security level of the engine.
+         * @property {securityLevel} [securityLevel='HIGH']  - determines the security level of the engine.
          * if it's set to 'HIGH' then you should use safe prime numbers as underlying group's modulus,
          * else if it's set to 'MEDIUM' then you should use prime numbers as modulus,
          * else it's set to 'LOW' then there is no condition but on other hands there is no guarantee
          * that the engine operates correctly.
+         * @type {securityLevel}
          */
         this.securityLevel = 'HIGH';
 
@@ -150,7 +151,7 @@ class ElGamal{
                 return false;
             else if(! this.q.isProbablePrime())
                 return false;
-        }else if(this.securityLevel === 'Medium'){
+        }else if(this.securityLevel === 'MEDIUM'){
             if(this.p === undefined)
                 throw new Error('Engine is not initialized!');
             
