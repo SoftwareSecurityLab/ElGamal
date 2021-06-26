@@ -359,12 +359,50 @@ class ElGamal{
      * can use it even if ElGamal fails security conditions.
      * This method is not part of elgamal but part of basic group functionality! it's provided
      * here to reduce the complexity of dependencies.
-     * @param {bigInteger.BigInteger} exponent - The exponent to calculate its modular exponentiation 
+     * @param {bigInteger.BigInteger|string} exponent - The exponent to calculate its modular exponentiation 
      * regarding generator
      * @returns {bigInteger.BigInteger} The resulted modular exponentiation
      */
     power(exponent){
+        if(typeof exponent === 'string')
+            exponent = bigInteger(exponent);
         return this.g.modPow(exponent, this.p);
+    }
+
+    /**
+     * calculate: a + b mod modulus. It works independent of ElGamal, it means you can use it 
+     * even if ElGamal fails security conditions.
+     * This method is not part of elgamal but part of basic group functionality! it's provided
+     * here to reduce the complexity of dependencies.
+     * @param {bigInteger.BigInteger|string} a - The first number.
+     * @param {bigInteger.BigInteger|string} b - The second number to be added with a.
+     * @returns {bigInteger.BigInteger} - The resulted modular addition.
+     */
+    add(a, b){
+        if(typeof a === 'string')
+            a = bigInteger(a);
+        if(typeof b === 'string')
+            b = bigInteger(b);
+
+        return a.add(b).mod(this.p);
+    }
+
+    /**
+     * calculate: a * b mod modulus. It works independent of ElGamal, it means you can use it 
+     * even if ElGamal fails security conditions.
+     * This method is not part of elgamal but part of basic group functionality! it's provided
+     * here to reduce the complexity of dependencies.
+     * @param {bigInteger.BigInteger|string} a - The first number
+     * @param {bigInteger.BigInteger|string} b - The second number to be multiplying in a
+     * @returns {bigInteger.BigInteger} - The resulted modular multiplication.
+     */
+    multiply(a, b){
+        if(typeof a === 'string')
+            a = bigInteger(a);
+        if(typeof b === 'string')
+            b = bigInteger(b);
+
+        return a.multiply(b).mod(this.p);
     }
 
     /**
