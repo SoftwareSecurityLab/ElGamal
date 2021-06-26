@@ -1,3 +1,9 @@
+/**
+ * ElGamal Module
+ * @module
+ */
+
+
 const bigInteger = require('big-integer');
 const bigIntManager = require('./bigIntManager');
 const debug = require('debug');
