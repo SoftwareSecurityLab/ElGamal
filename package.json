@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/iut-e-voting/elgamal.git"
+    "url": "git+https://gitlab.com/notAvailableYet/elgamal.git"
   },
   "keywords": [
     "elgamal",
@@ -21,9 +21,9 @@
   "author": "Golgolnia Milad",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/iut-e-voting/elgamal/issues"
+    "url": "https://gitlab.com/notAvailableYet/elgamal/issues"
   },
-  "homepage": "https://gitlab.com/iut-e-voting/elgamal#readme",
+  "homepage": "https://gitlab.com/notAvailableYet/elgamal#readme",
   "dependencies": {
     "big-integer": "^1.6.48",
     "debug": "^4.3.1",
