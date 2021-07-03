@@ -48,9 +48,12 @@ class ElGamal{
      * @param {string|bigInteger.BigInteger} [y] public key(encryption key), 
      * NOTE: this is not your public key but public key of receiver.
      * @param {string|bigInteger.BigInteger} [x] private key(decryption key)
+     * @param {boolean} [fill=true] - If true then the egine will try to initialize the undefined
+     * parameters on its own otherwise it leaves them undefined. NOTE! it's try to initialize them
+     * asynchronously.
      * @throws Will throw an error if any of passed parameters is an invalid big integer!
      */
-    constructor(p, g, y, x){
+    constructor(p, g, y, x, fill = true){
         
         /**
          * @property {securityLevel} [securityLevel='HIGH']  - determines the security level of the engine.
@@ -135,6 +138,9 @@ class ElGamal{
          */
         if(this.p)
             this.q = this.p.minus(1).divide(2);
+
+        if(this.p && this.g && fill)
+            this.fillIn();
         
     }
 
@@ -190,11 +196,11 @@ class ElGamal{
      * @param {number} lengthOfOrder indicate the length of Modulus of Group in bit
      */
     async initialize(lengthOfOrder = 4096){
-        let q = undefined;
+        this.q = undefined;
         do{
-            q = await bigIntManager.getPrime(lengthOfOrder-1);
-            log(q, typeof q);
-            this.p = q.shiftLeft(1).add(1);
+            this.q = await bigIntManager.getPrime(lengthOfOrder-1);
+            log(this.q, typeof this.q);
+            this.p = this.q.shiftLeft(1).add(1);
             log('one prime number produced:', this.p.bitLength());
         }while(!this.p.isPrime());
 
@@ -203,20 +209,14 @@ class ElGamal{
             let exponent = await bigIntManager.getInRange(this.p,3);
             this.g = bigInteger[2].modPow(exponent, this.p);
         }while(
-            this.g.modPow(q,this.p).notEquals(1) ||
+            this.g.modPow(this.q,this.p).notEquals(1) ||
             this.g.modPow(2,this.p).equals(1) ||
             this.p.prev().remainder(this.g).equals(0) ||
             this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
         );
-
-        //produce privateKey:
-        this.x = await bigIntManager.getInRange(
-            this.p.prev(),
-            2
-        );
-
-        //calculate public key:
-        this.y = this.g.modPow(this.x, this.p);
+        
+        //Produce other parameters:
+        await this.fillIn();
     }
 
     /**
@@ -263,14 +263,9 @@ class ElGamal{
                                 this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
                             );
 
-                            //produce privateKey:
-                            this.x = await bigIntManager.getInRange(
-                                this.p.prev(),
-                                2
-                            );
-                    
-                            //calculate public key:
-                            this.y = this.g.modPow(this.x, this.p);
+                            //Fill in the empty parameters:
+                            await this.fillIn();
+
                             resolve(true);
                         })
                     }
@@ -278,7 +273,24 @@ class ElGamal{
         })
     }
 
+    /**
+     * Fill in the empty parameters of ElGamal.
+     * The engine should at least has the generator and modulus initialized.
+     * Don't use this method directly.
+     * @async
+     * @throws Will throw an Error if one of Generator or Modulus is not provided.
+     */
+    async fillIn(){
+        //produce privateKey:
+        this.x = await bigIntManager.getInRange(
+            this.p.prev(),
+            2
+        );
 
+        //calculate public key:
+        this.y = this.g.modPow(this.x, this.p);
+    }
+    
     /**
      * Encrypt the given message under ElGamal cryptosystem schema. By default this use your own 
      * public key unless you change it by setting publicKey.
