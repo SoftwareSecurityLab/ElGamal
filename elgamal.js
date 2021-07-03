@@ -48,12 +48,9 @@ class ElGamal{
      * @param {string|bigInteger.BigInteger} [y] public key(encryption key), 
      * NOTE: this is not your public key but public key of receiver.
      * @param {string|bigInteger.BigInteger} [x] private key(decryption key)
-     * @param {boolean} [fill=true] - If true then the egine will try to initialize the undefined
-     * parameters on its own otherwise it leaves them undefined. NOTE! it's try to initialize them
-     * asynchronously.
      * @throws Will throw an error if any of passed parameters is an invalid big integer!
      */
-    constructor(p, g, y, x, fill = true){
+    constructor(p, g, y, x){
         
         /**
          * @property {securityLevel} [securityLevel='HIGH']  - determines the security level of the engine.
@@ -138,9 +135,6 @@ class ElGamal{
          */
         if(this.p)
             this.q = this.p.minus(1).divide(2);
-
-        if(this.p && this.g && fill)
-            this.fillIn();
         
     }
 
