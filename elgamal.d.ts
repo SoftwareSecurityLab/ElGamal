@@ -1,1 +1,0 @@
-declare module 'basic_simple_elgamal'
