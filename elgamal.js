@@ -468,9 +468,7 @@ class ElGamal{
      * @type {string}
      */
     get publicKey(){
-        if(this.securityLevel === 'LOW')
-            return this.y.toString();
-        return null;
+        return this.p.toString();
     }
 
     /**
