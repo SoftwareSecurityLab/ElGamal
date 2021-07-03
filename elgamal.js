@@ -468,7 +468,7 @@ class ElGamal{
      * @type {string}
      */
     get publicKey(){
-        return this.p.toString();
+        return this.y.toString();
     }
 
     /**
