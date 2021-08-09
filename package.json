@@ -1,14 +1,14 @@
 {
   "name": "basic_simple_elgamal",
   "version": "2.4.9",
-  "description": "This project is a part of IUT E-Voting. This is a cypher engine which uses ElGamal cryptosystem internally. besides cryptography, it provide some group functionality such as add 2 members or select a random group member and so on.",
+  "description": "This is a cypher engine which uses ElGamal cryptosystem internally. besides cryptography, it provide some group functionality such as add 2 members or select a random group member and so on.",
   "main": "./elgamal",
   "scripts": {
     "test": "echo 'test'"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/notAvailableYet/elgamal.git"
+    "url": "git+https://github.com/SoftwareSecurityLab/ElGamal.git"
   },
   "keywords": [
     "elgamal",
@@ -21,9 +21,9 @@
   "author": "Golgolnia Milad",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/notAvailableYet/elgamal/issues"
+    "url": "https://github.com/SoftwareSecurityLab/ElGamal/issues"
   },
-  "homepage": "https://gitlab.com/notAvailableYet/elgamal#readme",
+  "homepage": "https://github.com/SoftwareSecurityLab/ElGamal#readme",
   "dependencies": {
     "big-integer": "^1.6.48",
     "debug": "^4.3.1",
