@@ -81,7 +81,7 @@ Since engine works over [Cyclics Groups][cg], at first **you should map your mes
 
 This mapping doesn't have any confidentially value and you can publish it publicly. Hence to keep the flexibility of engine, we don't offer any strict way for mapping the messages but you can use any algorithm on your choice.
 
-To get the group members, you can call [randomGroupMember()][] method!
+To get the group members, you can call [`randomGroupMember()`](#randomgroupmember) method!
 
 Assume you have a message `m` and  you want to encrypt it:
 
@@ -102,7 +102,7 @@ Having the resulted cyphertext, you can decrypt it as below:
 ```
     let decryptedMessage = elgamal.decrypt(cipherText);
 ```
-The `decryptedMessage` is the original group member which you encrypted, so to get the original message you should apply your mapping to it!
+The `decryptedMessage` is the original group member which you encrypted, so to get the original message, you should apply your mapping to it!
 
 ## Methods
 
@@ -151,7 +151,7 @@ level is one of the following strings: `'HIGH'`, `'LOW'`, `'MEDIUM'`. if you pas
 ### `checkSecurity()`
 * **Returns:** boolean
 
-This method check the ElGamal engine against the 'security level' and if it satisfies the conditions then it will returns true and turns on the engine otherwise it will returns false and don't let you to use secure methods.
+This method checks the ElGamal engine against the *security level* and if it satisfies the conditions then it will returns true and activates the engine otherwise it will returns false and don't let you to use secure methods.
 
 ### `initialize([lengthOfOrder])`
 * **`lengthOfOrder`**: The length of underlying group order in bits.
@@ -193,7 +193,7 @@ methods. This is useful only if you use [constructor](#elgamalp-g-y-x) without p
 * **Throws Error**
 * **Secure**
 
-Encrypt your passed message and returns the corresponding cyphertext.
+Encrypts your passed message and returns the corresponding cyphertext.
 
 `message` parameter should be a member of underlying [Cyclic Group][cg]. We don't check for its membership but yourself should care about it.
 
@@ -213,16 +213,16 @@ The resulting cyphertext is an object containing two below properties:
 * **Secure**
 * **Throws Error**
   
-Decrypt the given cyphertext and returns corresponding plaintext.
+Decrypts the given cyphertext and returns corresponding plaintext.
 
-Throws an error if you didn't call [`checkSecurity()`](#checksecurity) method or it returns false which means the engine doesn't satisfy the considered security level. Also it throws an error if provided information is not complete(in case of initializing engine manually by calling [constructor](#elgamalp-g-y-x)).
+Throws an error if you didn't call [`checkSecurity()`](#checksecurity) method or it returns false which means the engine doesn't satisfy the considered security level. Also it throws an error if provided information is not complete (in case of initializing engine manually by calling [constructor](#elgamalp-g-y-x)).
 
 ### `randomGroupMember()`
 * **Returns:** [`big-integer`][bi]
 * **Async**
 
 Returns a group member randomly.  
-You can use this function to Make your customized mapping between messages and group members.
+You can use this function to make your customized mapping between messages and group members.
 
 This method is cryptographically secure so don't hesitate to use it.
 
@@ -230,7 +230,7 @@ This method is cryptographically secure so don't hesitate to use it.
 * **deep:** boolean
 * **Returns:** The exported engine.
 
-Export engine as an object then you can import it again using [`import()`](#importengine)
+Exports engine as an object then you can import it again using [`import()`](#importengine)
 
 `deep` parameters inidicates whether you want the whole engine to be experted or just public info of it.  
 Set `deep` as true result in exporting your random keys as well as other info. (You can read more about random key at [ElGamal][eg]).
@@ -244,7 +244,7 @@ By using this method you are enable to export and transfer your engine.
 * **`engine`:** The resulted object from calling [`export()`] method.
 * **Returns:** void
 
-Import ElGamal engine so that you can use it again.
+Imports ElGamal engine so that you can use it again.
 
 **NOTE:** You may need to call [`checkSecurity()`](#checksecurity) to activate *secure* methods.
 
