@@ -324,9 +324,7 @@ This work is published under [ISC][isc] license.
 [dl]: https://en.wikipedia.org/wiki/Discrete_logarithm
 [bi]: https://www.npmjs.com/package/big-integer
 [ssgp]: https://en.wikipedia.org/wiki/Safe_and_Sophie_Germain_primes
-
-[gitpage]: https://
-
+[gitpage]: https://github.com/SoftwareSecurityLab/ElGamal
 [exmpage]: ./tests/encryption-decryption.js
 [softsl]: https://github.com/SoftwareSecurityLab
 [tmail]: mailto:maryam.mouzarani@gmail.com
