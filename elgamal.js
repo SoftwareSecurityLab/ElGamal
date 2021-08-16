@@ -282,7 +282,8 @@ class ElGamal{
         );
 
         //calculate public key:
-        this.y = this.g.modPow(this.x, this.p);
+        if(this.y === undefined)
+            this.y = this.g.modPow(this.x, this.p);
     }
     
     /**
