@@ -1,6 +1,6 @@
 {
   "name": "basic_simple_elgamal",
-  "version": "2.4.13",
+  "version": "2.4.14",
   "description": "This is a cypher engine which uses ElGamal cryptosystem internally. besides cryptography, it provide some group functionality such as add 2 members or select a random group member and so on.",
   "main": "./elgamal",
   "scripts": {
