@@ -8,6 +8,17 @@ const bigInteger = require('big-integer');
 const bigIntManager = require('./bigIntManager');
 const debug = require('debug');
 const https = require('https');
+/**
+ * To access offline groups in offline mode:
+ */
+const fs = require('fs/promises');
+/*
+Below groups are just selected in offline mode and if you are in a browser:
+*/
+const defaultGroup2048Bit = require('./offlineGroups/2048/0');
+const defaultGroup3072Bit = require('./offlineGroups/3072/0');
+const defaultGroup4096Bit = require('./offlineGroups/4096/0');
+const defaultGroup8192Bit = require('./offlineGroups/8192/0')
 
 
 const log = debug('app::elgamal');
@@ -214,6 +225,50 @@ class ElGamal{
     }
 
     /**
+     * This is an internale method and you shouldn't call it directly!
+     * Gets modulus and group order then tries to initialize ElGamal Engine.
+     * Also p and q should be in Safe and Sophie Germain primes form.
+     * @param {string|number} p The modulus of group, Should be prime.
+     * @param {string|number} q The order of group, Should be prime.
+     * @throws Will throw an error if p or q are not prime.
+     * @throws Will throw an error if provided p and q aren't Safe and Sophie Germain primes.
+     */
+    async initializeUsingModulusGroup(p, q){
+        if(typeof p === 'number')
+            p = `p`
+        if(typeof q === 'number')
+            q = `q`
+
+        this.p = bigInteger(p);
+        this.q = bigInteger(q);
+
+        //check Validity of primes:
+        if(this.q.multiply(2).add(1).compareTo(this.p))
+            throw new Error(`The received primes are not in Safe form:
+                    p = ${p}, 
+                    q = ${q}`);
+        
+        if(!this.p.isProbablePrime())
+            throw new Error('P is not prime: '+ p);
+        if(!this.q.isProbablePrime())
+            throw new Error('q is not prime: ' + q);
+
+        //produce generator:
+        do{
+            let exponent = await bigIntManager.getInRange(this.p,3);
+            this.g = bigInteger[2].modPow(exponent, this.p);
+        }while(
+            this.g.modPow(this.q, this.p).notEquals(1) ||
+            this.g.modPow(2,this.p).equals(1) ||
+            this.p.prev().remainder(this.g).equals(0) ||
+            this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
+        );
+
+        //Fill in the empty parameters:
+        await this.fillIn();
+    }
+
+    /**
      * it's better to choose the lengthes which are divided evenly by 8.
      * This method tries to connect to a remote DB and get the underlying group information 
      * then initialize the engine.
@@ -227,43 +282,74 @@ class ElGamal{
     async initializeRemotely(lengthOfOrder = 4096){
         return new Promise((resolve, reject)=>{
 
-        https.get(`https://2ton.com.au/getprimes/random/${lengthOfOrder}`, 
-                    (res)=>{
-                        res.on('data', async (data)=>{
-                            let readableData = data.toString('utf8');
-                            let primes = JSON.parse(readableData);
-                            this.p = bigInteger(primes.p.base10);
-                            this.q = bigInteger(primes.q.base10);
+            https.get(`https://2ton.com.au/getprimes/random/${lengthOfOrder}`, 
+                        (res)=>{
+                            res.on('data', async (data)=>{
+                                let readableData = data.toString('utf8');
+                                let primes = JSON.parse(readableData);
+                                try{
+                                    await this.initializeUsingModulusGroup(
+                                        primes.p.base10,
+                                        primes.q.base10
+                                    )
+                                }catch(err){
+                                    log(err)
+                                    return reject(err)
+                                }
+                                resolve(true);
+                            })
+                        }
+            ).on('error', async (err)=>{
+                log(`Error: Unable to fetch group information from remote server!`)
+                log(err)
+                log(`       Server Address:https://2ton.com.au/getprimes/random/${lengthOfOrder}`)
+                log(`Redirecting this error to console and using offline groups...`)
+                console.log(`Unable to connect to server: ${err}`);
 
-                            //check Validity of primes:
-                            if(this.q.multiply(2).add(1).compareTo(this.p))
-                                reject(`The received primes are not in Safe form:
-                                        p = ${primes.p.base10}, 
-                                        q = ${primes.q.base10}`);
-                            
-                            if(!this.p.isProbablePrime())
-                                reject('P is not prime: '+ primes.p.base10);
-                            if(!this.q.isProbablePrime())
-                                reject('q is not prime: ' + primes.q.base10);
+                //Check if we live in browser or not:
+                if(global?.performance?.nodeTiming?.name){
+                    //We are in Node.js, so we can use a random group info easily.
 
-                            //produce generator:
-                            do{
-                                let exponent = await bigIntManager.getInRange(this.p,3);
-                                this.g = bigInteger[2].modPow(exponent, this.p);
-                            }while(
-                                this.g.modPow(this.q, this.p).notEquals(1) ||
-                                this.g.modPow(2,this.p).equals(1) ||
-                                this.p.prev().remainder(this.g).equals(0) ||
-                                this.p.prev().remainder(this.g.modInv(this.p)).equals(0)
-                            );
-
-                            //Fill in the empty parameters:
-                            await this.fillIn();
-
-                            resolve(true);
-                        })
+                    let groupIndex = Math.floor(Math.random() * 100)
+                    /**
+                     * We load a random group and keep it inside memory because we may 
+                     * choose it later too:
+                     */
+                    let group = require(`./offlineGroups/${lengthOfOrder}/${groupIndex}`);
+                    try{
+                        await this.initializeUsingModulusGroup(
+                            group.p, group.q
+                        )
+                    }catch(err){
+                        log(err);
+                        return reject(err);
                     }
-        )
+                    resolve(true)
+
+                }else{
+                    /*
+                    *   We are in a browser, so we don't have access to file system and we should 
+                    *       use default groups:
+                    */
+                   if(lengthOfOrder == 2048)
+                        await this.initializeUsingModulusGroup(
+                            defaultGroup2048Bit.p, defaultGroup2048Bit.q
+                        )
+                    else if(lengthOfOrder == 3072)
+                        await this.initializeUsingModulusGroup(
+                            defaultGroup3072Bit.p, defaultGroup3072Bit.q
+                        )
+                    else if(lengthOfOrder == 4096)
+                        await this.initializeUsingModulusGroup(
+                            defaultGroup4096Bit.p, defaultGroup4096Bit.q
+                        )
+                    else if(lengthOfOrder == 8192)
+                            await this.initializeUsingModulusGroup(
+                                defaultGroup8192Bit.p, defaultGroup8192Bit.q
+                            )
+                    resolve(true);
+                }
+            })
         })
     }
 
